@@ -1,10 +1,8 @@
 const STYLES = {
-  open: 'text-pending border-pending/40 bg-pending/10',
+  open: 'text-pending border-pending/40 bg-pending/10 shadow-glow',
   tp_hit: 'text-long border-long/40 bg-long/10',
   sl_hit: 'text-short border-short/40 bg-short/10',
-  closed: 'text-mute border-line bg-panel',
-  buy: 'text-long',
-  sell: 'text-short'
+  closed: 'text-mute border-line bg-panel'
 }
 
 const LABELS = {

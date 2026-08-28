@@ -2,7 +2,10 @@
 
 A weekend-scope signals + education app: admin posts trade setups and notes,
 traders follow the feed, comment, react, and see an auto-computed win-rate
-track record.
+track record — styled as a real trading desk: scrolling ticker banner,
+proportional price ladders on every signal (visualizing entry/SL/TP and
+R:R to scale), an equity curve, and a role-accented UI (violet chrome in
+admin mode, blue in trader mode).
 
 Runs entirely on **in-memory mock data** out of the box — no backend, no
 signup, no API keys. Everything resets on refresh. That's intentional: get
@@ -26,13 +29,15 @@ src/
   lib/mockData.js          seed data — edit this to change the demo content
   lib/supabaseClient.js    placeholder + notes for wiring a real backend
   components/
-    LoginScreen.jsx        role picker (swap for real auth later)
-    Nav.jsx                top bar + view switching
+    LoginScreen.jsx        hero role picker, staggered entrance motion
+    Nav.jsx                top bar, role-accent stripe, animated tab pill
+    TickerBanner.jsx       scrolling market-style status ticker
     Feed.jsx                the main feed
-    PostCard.jsx           signal card + education card
-    Composer.jsx           admin: post a signal or a note
+    PostCard.jsx           signal card (with PriceLadder) + education card
+    PriceLadder.jsx        proportional SL/Entry/TP ruler + R:R ratio
+    Composer.jsx           admin: post a signal or a note, ticket-styled
     AdminDashboard.jsx     admin: mark open signals as TP/SL/closed
-    StatsPage.jsx          win rate, wins/losses, filter by pair
+    StatsPage.jsx          win rate, equity curve chart, filter by pair
     CommentThread.jsx      comments, admin-only delete
     Badge.jsx              status pill (open / TP hit / SL hit / closed)
 ```

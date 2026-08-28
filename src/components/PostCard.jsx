@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useApp } from '../context/AppContext.jsx'
 import Badge from './Badge.jsx'
 import CommentThread from './CommentThread.jsx'
+import PriceLadder from './PriceLadder.jsx'
 
 const EDGE = {
   open: 'border-l-pending',
@@ -18,90 +20,124 @@ function timeAgo(iso) {
   return `${Math.floor(hrs / 24)}d ago`
 }
 
+function Footer({ post, commentCount, reacted, count, onReact, onToggleComments }) {
+  return (
+    <div className="mt-3 flex items-center justify-between pb-3 text-xs text-mute">
+      <span>{post.author} &middot; {timeAgo(post.createdAt)}</span>
+      <div className="flex items-center gap-3">
+        <motion.button
+          whileTap={{ scale: 0.85 }}
+          onClick={onReact}
+          className={`flex items-center gap-1 transition hover:text-paper ${reacted ? 'text-accent' : ''}`}
+        >
+          <motion.span
+            animate={reacted ? { y: [0, -3, 0] } : {}}
+            transition={{ duration: 0.3 }}
+          >
+            &#9650;
+          </motion.span>{' '}
+          {count}
+        </motion.button>
+        <button onClick={onToggleComments} className="hover:text-paper">
+          {commentCount} comment{commentCount === 1 ? '' : 's'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function PostCard({ post }) {
   const { comments, reactions, myReactions, toggleReaction } = useApp()
   const [open, setOpen] = useState(false)
   const commentCount = (comments[post.id] || []).length
   const reacted = myReactions.has(post.id)
 
+  const commentPanel = (
+    <AnimatePresence initial={false}>
+      {open && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="overflow-hidden"
+        >
+          <CommentThread postId={post.id} />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+
   if (post.type === 'signal') {
     return (
-      <article className={`rounded-lg border border-line border-l-4 ${EDGE[post.status]} bg-panel`}>
+      <motion.article
+        layout
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -2 }}
+        transition={{ duration: 0.3 }}
+        className={`rounded-xl border border-line border-l-4 ${EDGE[post.status]} bg-panel transition-shadow hover:border-line/80`}
+      >
         <div className="px-4 pt-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-sm font-bold">{post.pair}</span>
-              <span className={`font-mono text-xs font-semibold uppercase ${post.direction === 'buy' ? 'text-long' : 'text-short'}`}>
-                {post.direction}
+              <span className="font-display text-sm font-bold">{post.pair}</span>
+              <span
+                className={`flex items-center gap-1 font-mono text-xs font-semibold uppercase ${
+                  post.direction === 'buy' ? 'text-long' : 'text-short'
+                }`}
+              >
+                {post.direction === 'buy' ? '\u25B2' : '\u25BC'} {post.direction}
               </span>
-              <span className="text-xs text-mute">{post.timeframe}</span>
+              <span className="rounded border border-line px-1.5 py-0.5 text-[10px] font-mono text-mute">
+                {post.timeframe}
+              </span>
             </div>
             <Badge status={post.status} />
           </div>
 
-          <div className="mt-3 grid grid-cols-3 gap-2 font-mono text-xs">
-            <div className="rounded-md bg-ink px-2.5 py-2">
-              <div className="text-mute">Entry</div>
-              <div className="tabular mt-0.5 font-semibold">{post.entry}</div>
-            </div>
-            <div className="rounded-md bg-ink px-2.5 py-2">
-              <div className="text-mute">Stop</div>
-              <div className="tabular mt-0.5 font-semibold text-short">{post.sl}</div>
-            </div>
-            <div className="rounded-md bg-ink px-2.5 py-2">
-              <div className="text-mute">Target</div>
-              <div className="tabular mt-0.5 font-semibold text-long">{post.tp}</div>
-            </div>
-          </div>
+          <PriceLadder entry={post.entry} sl={post.sl} tp={post.tp} />
 
           <p className="mt-3 text-sm leading-relaxed text-paper/90">{post.reasoning}</p>
 
-          <div className="mt-3 flex items-center justify-between pb-3 text-xs text-mute">
-            <span>{post.author} &middot; {timeAgo(post.createdAt)}</span>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => toggleReaction(post.id)}
-                className={`flex items-center gap-1 transition hover:text-paper ${reacted ? 'text-accent' : ''}`}
-              >
-                &#9650; {reactions[post.id] || 0}
-              </button>
-              <button onClick={() => setOpen((o) => !o)} className="hover:text-paper">
-                {commentCount} comment{commentCount === 1 ? '' : 's'}
-              </button>
-            </div>
-          </div>
+          <Footer
+            post={post}
+            commentCount={commentCount}
+            reacted={reacted}
+            count={reactions[post.id] || 0}
+            onReact={() => toggleReaction(post.id)}
+            onToggleComments={() => setOpen((o) => !o)}
+          />
         </div>
-        {open && <CommentThread postId={post.id} />}
-      </article>
+        {commentPanel}
+      </motion.article>
     )
   }
 
-  // education post
   return (
-    <article className="rounded-lg border border-line border-l-4 border-l-accent bg-panel">
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.3 }}
+      className="rounded-xl border border-line border-l-4 border-l-accent bg-panel"
+    >
       <div className="px-4 pt-4">
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-[11px] font-semibold uppercase tracking-wide text-accent">Note</span>
-        </div>
-        <h3 className="mt-2 text-base font-bold">{post.title}</h3>
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-wide text-accent">Note</span>
+        <h3 className="mt-2 font-display text-base font-bold">{post.title}</h3>
         <p className="mt-1.5 text-sm leading-relaxed text-paper/90">{post.body}</p>
 
-        <div className="mt-3 flex items-center justify-between pb-3 text-xs text-mute">
-          <span>{post.author} &middot; {timeAgo(post.createdAt)}</span>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => toggleReaction(post.id)}
-              className={`flex items-center gap-1 transition hover:text-paper ${reacted ? 'text-accent' : ''}`}
-            >
-              &#9650; {reactions[post.id] || 0}
-            </button>
-            <button onClick={() => setOpen((o) => !o)} className="hover:text-paper">
-              {commentCount} comment{commentCount === 1 ? '' : 's'}
-            </button>
-          </div>
-        </div>
+        <Footer
+          post={post}
+          commentCount={commentCount}
+          reacted={reacted}
+          count={reactions[post.id] || 0}
+          onReact={() => toggleReaction(post.id)}
+          onToggleComments={() => setOpen((o) => !o)}
+        />
       </div>
-      {open && <CommentThread postId={post.id} />}
-    </article>
+      {commentPanel}
+    </motion.article>
   )
 }
